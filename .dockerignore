@@ -10,3 +10,4 @@ __pycache__/
 **/.adk/
 key.json
 agents/key.json
+gha-creds-*.json
