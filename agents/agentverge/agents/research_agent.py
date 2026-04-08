@@ -1,9 +1,49 @@
 from google.adk.agents import SequentialAgent
 from google.adk.agents.llm_agent import LlmAgent
-from google.adk.tools import AgentTool, google_search
+from google.adk.tools import google_search
 
 from ..config import DEFAULT_MODEL
 from ..prompts import load_prompt
+
+researcher = LlmAgent(
+    name="researcher",
+    model=DEFAULT_MODEL,
+    tools=[google_search],
+    instruction=(
+        """
+You are the research execution specialist.
+
+The approved research plan is:
+{research_plan}
+
+Execute that plan thoroughly using Google Search when needed.
+Organize your findings by the same three themes from the plan.
+For each theme, capture the most relevant facts, metrics, examples, and trends.
+Keep the findings factual and concise so the synthesizer can turn them into a polished answer.
+""".strip()
+    ),
+    output_key="research_findings",
+)
+
+synthesizer = LlmAgent(
+    name="synthesizer",
+    model=DEFAULT_MODEL,
+    instruction=(
+        """
+You are the synthesis specialist.
+
+Research plan:
+{research_plan}
+
+Research findings:
+{research_findings}
+
+Combine the findings into one cohesive, well-structured answer that directly addresses the user's request.
+Highlight the most important takeaways first, then support them with the strongest evidence gathered.
+If the research findings are incomplete, say so plainly instead of pretending the evidence is stronger than it is.
+""".strip()
+    ),
+)
 
 planner = LlmAgent(
     name="research_planner",
@@ -13,52 +53,13 @@ You are a research planning specialist.
 
 Break the user's request into exactly three distinct research themes.
 Return a practical plan the downstream research pipeline can execute clearly.
+Use short headings and concrete investigation steps for each theme.
 """.strip(),
+    output_key="research_plan",
 )
 
-researcher = LlmAgent(
-    name="researcher",
-    model=DEFAULT_MODEL,
-    tools=[google_search],
-    instruction="""
-You are the research execution specialist.
-
-Research the assigned topic step-by-step, use Google Search when needed,
-and gather the most relevant facts before handing off to the synthesizer.
-""".strip(),
-)
-
-synthesizer = LlmAgent(
-    name="synthesizer",
-    model=DEFAULT_MODEL,
-    instruction="""
-You are the synthesis specialist.
-
-Combine the research findings into one cohesive, well-structured answer
-that directly addresses the user's request.
-""".strip(),
-)
-
-execution_pipeline = SequentialAgent(
-    name="research_execution_pipeline",
-    description="Runs the research and synthesis stages in sequence.",
-    sub_agents=[researcher, synthesizer],
-)
-
-research_agent = LlmAgent(
+research_agent = SequentialAgent(
     name="research_manager",
-    model=DEFAULT_MODEL,
-    description="Handles general research, information gathering, and synthesized summaries.",
-    tools=[AgentTool(planner)],
-    sub_agents=[execution_pipeline],
-    instruction=(
-        load_prompt("research_agent.md")
-        + "\n\n"
-        + """
-Workflow:
-1. Use the research_planner tool to produce a detailed three-theme research plan.
-2. Pass that completed plan to the research_execution_pipeline sub-agent.
-3. Return the synthesized final answer from the pipeline to the user.
-""".strip()
-    ),
+    description=load_prompt("research_agent.md"),
+    sub_agents=[planner, researcher, synthesizer],
 )
