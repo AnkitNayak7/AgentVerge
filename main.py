@@ -45,4 +45,3 @@ def healthz():
         "service": "agentverge",
         "adk_loaded": adk_loaded,
     }
-``
