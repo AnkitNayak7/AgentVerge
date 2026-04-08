@@ -1,0 +1,6 @@
+STATE_TIME_KEY = "_time"
+LAST_EVENT_INDEX_TO_ID = "last_list_index_to_event_id"
+LAST_TASKLIST_INDEX_TO_ID = "last_tasklist_index_to_id"
+LAST_TASKLIST_ID_TO_NAME = "last_tasklist_id_to_name"
+ACTIVE_TASKLIST_ID = "active_tasklist_id"
+LAST_TASK_INDEX_TO_ID = "last_task_index_to_id"

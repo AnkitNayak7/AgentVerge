@@ -1,17 +1,12 @@
-# Advent of Agents (Spring 2026)
+# AgentVerge
 
-This repository contains the code for various agents (Fanout, Sculptor, Critic, Hierarchical) built using the Google Agent Development Kit (ADK).
+This repository is structured around a single Google ADK app named `AgentVerge`.
 
-## Demo Videos
-
-See the agents in action!
-- **Hierarchical:** [https://youtu.be/68EznHkK_UQ](https://youtu.be/68EznHkK_UQ)
-- **Fanout:** [https://youtu.be/4-lr3sh2ETM](https://youtu.be/4-lr3sh2ETM)
-- **Critic:** [https://youtu.be/Kp0HrGst5-w](https://youtu.be/Kp0HrGst5-w)
+`AgentVerge` is the only top-level app intended to appear in the ADK web UI. Calendar, Tasks, and Research are implemented as internal sub-agents beneath that root orchestrator.
 
 ## Prerequisites
 
-- [Python 3.11+](https://www.python.org/downloads/)
+- [Python 3.13+](https://www.python.org/downloads/)
 - [uv](https://docs.astral.sh/uv/) (Python package and environment manager)
 
 ## Installation
@@ -19,7 +14,7 @@ See the agents in action!
 1. **Clone the repository:**
    ```bash
    git clone <repository-url>
-   cd aoa-luissala
+   cd AgentVerge
    ```
 
 2. **Install dependencies using uv:**
@@ -29,37 +24,57 @@ See the agents in action!
 
 ## Environment Setup
 
-You need a Google Gemini API key to run these agents.
+You need the Gemini model key and Google OAuth settings used by the sub-agents.
 
 1. Get an API key from [Google AI Studio](https://aistudio.google.com/).
 2. Copy the sample environment file:
    ```bash
    cp sample.env .env
    ```
-3. Edit the `.env` file and replace `"your_api_key_here"` with your actual API key.
+3. Edit `.env` and provide the values needed by the app, including:
+   - `GOOGLE_API_KEY`
+   - `OAUTH_CLIENT_ID`
+   - `OAUTH_CLIENT_SECRET`
+   - optional `APP_TIMEZONE`
+4. In Google Cloud, make sure the OAuth redirect URI matches the ADK Web URL you actually use.
+   - If you run `uv run adk web agents --port 8000`, add `http://127.0.0.1:8000/dev-ui/` as an authorized redirect URI.
+   - If you use a different port, change the redirect URI to match that exact port.
 
 *Note: The `.env` file is ignored by Git to keep your API keys secure.*
 
-## Running the Agents
+## Project Layout
 
-There are two main ways to execute the agents:
-
-### 1. Locally via Direct Script Execution
-You can run any specific agent directly to execute its built-in prompt via the `__main__` block. For example, to run the Hierarchical agent's predefined test:
-```bash
-uv run python agents/hierarchical/agent.py
+```text
+agents/
+\-- agentverge/
+    +-- agent.py
+    +-- main.py
+    +-- config.py
+    +-- prompts/
+    +-- agents/
+    +-- tools/
+    +-- state/
+    +-- services/
 ```
 
-### 2. Locally via Interactive ADK CLI
-If you want to have an interactive chat session with the agent in your terminal, use the ADK CLI:
-```bash
-uv run adk run agents/hierarchical
-```
-This will start an interactive runner where you can converse and enter prompts directly in your terminal.
+## Running AgentVerge
 
-### 3. Via the ADK Web UI
-If you prefer a visual interface, you can launch the built-in ADK web experience:
+### 1. Run the FastAPI entrypoint
 ```bash
-uv run adk web agents --port 21000
+uv run python main.py
 ```
-Then, open your browser and navigate to `http://localhost:21000/dev-ui/` to interact with all the deployed Apps.
+
+### 2. Run AgentVerge in ADK CLI
+```bash
+uv run adk run agents/agentverge
+```
+
+### 3. Run AgentVerge in ADK Web
+```bash
+uv run adk web agents --port 8000
+```
+Then open `http://localhost:8000/dev-ui/`.
+
+If Google Calendar or Google Tasks actions do not prompt for sign-in or fail immediately, verify that the OAuth redirect URI in Google Cloud exactly matches `http://127.0.0.1:8000/dev-ui/` for this command.
+
+With the legacy agent folders moved out of top-level discovery, the web UI should surface only `AgentVerge` as the main app.

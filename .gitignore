@@ -10,10 +10,13 @@ wheels/
 # Virtual environments
 .venv
 .env
+.idea/
 .adk/
+**/.adk/
 *.pyc
 uv.lock
 key.json
+session.db
 
 # External repositories
 advent-of-agents/
