@@ -9,8 +9,7 @@ dependencies = [
     "fastapi>=0.110.0",
     "google-adk>=1.26.0",
     "python-dotenv>=1.0.0",
-    "uvicorn[standard]>=0.30.0",
-    "greenlet==3.0.3"
+    "uvicorn[standard]>=0.30.0"
 ]
 
 [tool.uv]
