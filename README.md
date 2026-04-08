@@ -59,7 +59,7 @@ agents/
 
 ## Running AgentVerge
 
-### 1. Run the FastAPI entrypoint
+### 1. Run the ADK FastAPI entrypoint
 ```bash
 uv run python main.py
 ```
@@ -78,3 +78,41 @@ Then open `http://localhost:8000/dev-ui/`.
 If Google Calendar or Google Tasks actions do not prompt for sign-in or fail immediately, verify that the OAuth redirect URI in Google Cloud exactly matches `http://127.0.0.1:8000/dev-ui/` for this command.
 
 With the legacy agent folders moved out of top-level discovery, the web UI should surface only `AgentVerge` as the main app.
+
+## Deploying To Cloud Run
+
+1. Set your Google Cloud project:
+   ```bash
+   gcloud config set project YOUR_PROJECT_ID
+   ```
+
+2. Enable the required services:
+   ```bash
+   gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com
+   ```
+
+3. Create secrets for the sensitive values:
+   ```bash
+   echo -n "YOUR_GOOGLE_API_KEY" | gcloud secrets create GOOGLE_API_KEY --data-file=-
+   echo -n "YOUR_OAUTH_CLIENT_ID" | gcloud secrets create OAUTH_CLIENT_ID --data-file=-
+   echo -n "YOUR_OAUTH_CLIENT_SECRET" | gcloud secrets create OAUTH_CLIENT_SECRET --data-file=-
+   ```
+
+4. Grant the Cloud Run service account access to those secrets.
+
+5. Deploy from the repository root:
+   ```bash
+   gcloud run deploy agentverge ^
+     --source . ^
+     --region us-central1 ^
+      --allow-unauthenticated ^
+     --set-env-vars APP_TIMEZONE=Asia/Kolkata ^
+     --set-secrets GOOGLE_API_KEY=GOOGLE_API_KEY:latest,OAUTH_CLIENT_ID=OAUTH_CLIENT_ID:latest,OAUTH_CLIENT_SECRET=OAUTH_CLIENT_SECRET:latest
+   ```
+
+6. After deployment, copy the Cloud Run service URL and add this redirect URI in Google Cloud OAuth settings:
+   ```text
+   https://YOUR_CLOUD_RUN_URL/dev-ui/
+   ```
+
+Cloud Run injects the `PORT` environment variable automatically. The app entrypoint is configured to bind to that port on `0.0.0.0`, and the deployed ADK UI will be available at `/dev-ui/`.

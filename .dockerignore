@@ -1,0 +1,12 @@
+.git
+.gitignore
+.env
+.venv
+.idea
+__pycache__/
+**/__pycache__/
+*.pyc
+.adk/
+**/.adk/
+key.json
+agents/key.json

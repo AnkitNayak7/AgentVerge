@@ -1,31 +1,23 @@
-from fastapi import FastAPI
+import os
+
 import uvicorn
+from fastapi import FastAPI
+from google.adk.cli.fast_api import get_fast_api_app
 
-from agents.agentverge.config import APP_NAME, ROOT_AGENT_NAME
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+AGENTS_DIR = os.path.join(BASE_DIR, "agents")
 
-app = FastAPI()
-
-
-@app.get("/")
-def home():
-    return {
-        "status": "ok",
-        "message": f"{ROOT_AGENT_NAME} is ready.",
-        "service": APP_NAME,
-    }
+app: FastAPI = get_fast_api_app(
+    agents_dir=AGENTS_DIR,
+    allow_origins=["*"],
+    web=True,
+)
 
 
-@app.get("/run")
-def run_agent():
-    return {
-        "status": "success",
-        "message": f"Launch {ROOT_AGENT_NAME} from the ADK web UI.",
-    }
-
-
-def main():
-    print(f"{ROOT_AGENT_NAME} is ready.")
+@app.get("/healthz")
+def healthz():
+    return {"status": "ok", "service": "agentverge"}
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", "8080")))
