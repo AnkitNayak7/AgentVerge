@@ -1,34 +1,48 @@
 import os
+import asyncio
 from fastapi import FastAPI
 from google.adk.cli.fast_api import get_fast_api_app
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 AGENTS_DIR = os.path.join(BASE_DIR, "agents")
 
-# ✅ Create a minimal FastAPI app immediately
 app = FastAPI()
+adk_loaded = False
+
+
+async def load_adk():
+    """
+    Load Google ADK in background so Cloud Run can bind PORT immediately
+    """
+    global adk_loaded
+    try:
+        adk_app = get_fast_api_app(
+            agents_dir=AGENTS_DIR,
+            allow_origins=["*"],
+            web=True,   # keep web UI
+        )
+        app.mount("/", adk_app)
+        adk_loaded = True
+        print("✅ ADK loaded successfully")
+    except Exception as e:
+        print("❌ ADK failed to load:", e)
 
 
 @app.on_event("startup")
-def startup_event():
+async def startup_event():
     """
-    IMPORTANT:
-    - Do NOT do heavy work at import time in Cloud Run
-    - Initialize ADK only AFTER the server process starts
+    Cloud Run SAFE:
+    - Do NOT block startup
+    - Kick off ADK init in background
     """
-    adk_app = get_fast_api_app(
-        agents_dir=AGENTS_DIR,
-        allow_origins=["*"],
-        web=True,
-    )
-
-    # Mount ADK app at root
-    app.mount("/", adk_app)
+    asyncio.create_task(load_adk())
 
 
 @app.get("/healthz")
 def healthz():
-    """
-    Lightweight health check for Cloud Run
-    """
-    return {"status": "ok", "service": "agentverge"}
+    return {
+        "status": "ok",
+        "service": "agentverge",
+        "adk_loaded": adk_loaded,
+    }
+``
