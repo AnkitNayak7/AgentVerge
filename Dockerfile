@@ -11,6 +11,6 @@ RUN pip install --upgrade pip
 RUN pip install uv
 RUN uv sync --no-dev
 
-EXPOSE 8000
+EXPOSE 8080
 
 CMD ["uv", "run", "python", "main.py"]
