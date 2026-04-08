@@ -3,7 +3,7 @@ name = "ankit-nayak"
 version = "0.1.0"
 description = "AgentVerge AI Agent"
 readme = "README.md"
-requires-python = ">=3.13,<3.14"
+requires-python = ">=3.11,<3.14"
 
 dependencies = [
     "fastapi>=0.110.0",

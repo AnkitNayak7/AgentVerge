@@ -1,31 +1,27 @@
-# Use stable Python version
 FROM python:3.11-slim
 
-# Environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV PORT=8080
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy dependency definition first (better caching)
-COPY pyproject.toml ./
+# Install dependencies from pyproject (app code is not an installable package layout)
+COPY pyproject.toml README.md ./
 
-# Install Python tooling and dependencies
 RUN pip install --upgrade pip \
-    && pip install uv \
-    && uv sync --no-dev
+    && pip install \
+    "fastapi>=0.110.0" \
+    "google-adk>=1.26.0" \
+    "python-dotenv>=1.0.0" \
+    "uvicorn[standard]>=0.30.0"
 
-# Copy application source
 COPY . .
 
-# Cloud Run listens on 8080
 EXPOSE 8080
 
-# ✅ FIX: Run uvicorn via Python module (Cloud Run safe)
-CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Cloud Run sets PORT; default 8080 for local `docker run`
+CMD ["sh", "-c", "exec python -m uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080}"]

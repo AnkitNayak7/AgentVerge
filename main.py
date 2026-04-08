@@ -1,25 +1,25 @@
 import os
-import asyncio
 from fastapi import FastAPI
+from contextlib import asynccontextmanager
 from google.adk.cli.fast_api import get_fast_api_app
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 AGENTS_DIR = os.path.join(BASE_DIR, "agents")
 
-app = FastAPI()
 adk_loaded = False
 
 
-async def load_adk():
-    """
-    Load Google ADK in background so Cloud Run can bind PORT immediately
-    """
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     global adk_loaded
+
+    print("🚀 App starting...")
+
     try:
         adk_app = get_fast_api_app(
             agents_dir=AGENTS_DIR,
             allow_origins=["*"],
-            web=True,   # keep web UI
+            web=True,
         )
         app.mount("/", adk_app)
         adk_loaded = True
@@ -27,15 +27,12 @@ async def load_adk():
     except Exception as e:
         print("❌ ADK failed to load:", e)
 
+    yield
 
-@app.on_event("startup")
-async def startup_event():
-    """
-    Cloud Run SAFE:
-    - Do NOT block startup
-    - Kick off ADK init in background
-    """
-    asyncio.create_task(load_adk())
+    print("🛑 App shutting down...")
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.get("/healthz")

@@ -48,7 +48,9 @@ jobs:
           docker push "$IMAGE"
           echo "IMAGE=$IMAGE" >> $GITHUB_ENV
 
-      # 6️⃣ Deploy to Cloud Run (EXPLICIT runtime service account)
+      # 6️⃣ Deploy to Cloud Run (runtime SA + Secret Manager)
+      #    Secrets GOOGLE_API_KEY, OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET must exist;
+      #    the runtime SA needs secretAccessor on each.
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy "${{ env.SERVICE }}" \
@@ -56,4 +58,6 @@ jobs:
             --region "${{ env.REGION }}" \
             --platform managed \
             --service-account "${{ env.RUNTIME_SA }}" \
-            --allow-unauthenticated
+            --allow-unauthenticated \
+            --set-env-vars "APP_TIMEZONE=Asia/Kolkata" \
+            --set-secrets "GOOGLE_API_KEY=GOOGLE_API_KEY:latest,OAUTH_CLIENT_ID=OAUTH_CLIENT_ID:latest,OAUTH_CLIENT_SECRET=OAUTH_CLIENT_SECRET:latest"
