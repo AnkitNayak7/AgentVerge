@@ -15,5 +15,5 @@ RUN pip install --upgrade pip \
     && pip install uv \
     && uv sync --no-dev
 
-# Start FastAPI app
-CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Start FastAPI app and let Cloud Run inject PORT
+CMD ["uv", "run", "python", "main.py"]

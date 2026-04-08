@@ -17,4 +17,7 @@ OAUTH_CLIENT_ID = os.getenv("OAUTH_CLIENT_ID")
 OAUTH_CLIENT_SECRET = os.getenv("OAUTH_CLIENT_SECRET")
 
 if not OAUTH_CLIENT_ID or not OAUTH_CLIENT_SECRET:
-    raise ValueError("Missing OAUTH_CLIENT_ID / OAUTH_CLIENT_SECRET in .env")
+    raise ValueError(
+        "Missing OAUTH_CLIENT_ID / OAUTH_CLIENT_SECRET. "
+        "Set them in local .env or inject them as environment variables/secrets in Cloud Run."
+    )
