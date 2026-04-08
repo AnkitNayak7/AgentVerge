@@ -10,30 +10,37 @@ env:
   SERVICE: agentverge
   REGION: us-central1
   REPO: adk-repo
+  RUNTIME_SA: agentverge-sa-587@gcp-experiments-491309.iam.gserviceaccount.com
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      # 1️⃣ Checkout source
+      - name: Checkout source
         uses: actions/checkout@v4
 
-      # ✅ Authenticate using Service Account Key JSON
+      # 2️⃣ Authenticate to GCP using Service Account JSON key
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
+      # 3️⃣ Setup gcloud SDK
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v3
         with:
           project_id: ${{ env.PROJECT_ID }}
 
+      # 4️⃣ Configure Docker auth for Artifact Registry
       - name: Configure Artifact Registry auth
         run: |
-          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+          gcloud auth configure-docker \
+            ${{ env.REGION }}-docker.pkg.dev \
+            --quiet
 
+      # 5️⃣ Build and push Docker image
       - name: Build and push container
         run: |
           IMAGE="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.SERVICE }}:${{ github.sha }}"
@@ -41,10 +48,12 @@ jobs:
           docker push "$IMAGE"
           echo "IMAGE=$IMAGE" >> $GITHUB_ENV
 
+      # 6️⃣ Deploy to Cloud Run (EXPLICIT runtime service account)
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy "${{ env.SERVICE }}" \
             --image "${{ env.IMAGE }}" \
             --region "${{ env.REGION }}" \
             --platform managed \
+            --service-account "${{ env.RUNTIME_SA }}" \
             --allow-unauthenticated
